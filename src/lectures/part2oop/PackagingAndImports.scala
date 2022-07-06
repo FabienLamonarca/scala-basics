@@ -3,7 +3,6 @@ package lectures.part2oop
 import playground.{Cinderella => Princess, PrinceCharming}
 
 import java.util.Date
-import java.sql.Date
 
 object PackagingAndImports extends App {
 

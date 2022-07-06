@@ -1,37 +1,94 @@
 package exercices
 
-abstract class MyList {
-    def head: Int
-    def tail: MyList
+abstract class MyList[+A] {
+    def head: A
+
+    def tail: MyList[A]
+
     def isEmpty: Boolean
-    def add(element: Int): MyList
+
+    def add[B >: A](element: B): MyList[B] // [B >: A] super.type of A
+
     def printElements: String
+
     override def toString: String = s"[${printElements}]"
+
+    // Higher-order functions -> receive other function as arguments
+    def map[B](transformer: A => B): MyList[B]
+    def filter(predicate: A => Boolean): MyList[A]
+
 }
 
-object Empty extends MyList {
-    def head: Int = throw new NoSuchElementException
-    def tail: MyList = throw new NoSuchElementException
+object Empty extends MyList[Nothing] {
+    def head: Nothing = throw new NoSuchElementException
+
+    def tail: MyList[Nothing] = throw new NoSuchElementException
+
     def isEmpty: Boolean = true
-    def add(element: Int): MyList = new Cons(element, Empty)
-    override def printElements: String = ""
+
+    def add[B >: Nothing](element: B): MyList[B] = new Cons(element, Empty)
+
+    def printElements: String = ""
+
+    def map[B](transformer: Nothing => B): MyList[B] = Empty
+
+    def flatmap[B](transformer: Nothing => MyList[B]): MyList[B] = Empty
+
+    def filter(predicate: Nothing => Boolean): MyList[Nothing] = Empty
 }
 
-class Cons(h: Int, t: MyList) extends MyList {
-    def head: Int = h
-    def tail: MyList = t
+class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
+    def head: A = h
+
+    def tail: MyList[A] = t
+
     def isEmpty: Boolean = false
-    def add(element: Int): MyList = new Cons(element, this)
+
+    def add[B >: A](element: B): MyList[B] = new Cons(element, this)
+
     override def printElements: String = {
-        if(t.isEmpty) s"$h"
+        if (t.isEmpty) s"$h"
         else s"$h ${t.printElements}"
+    }
+
+    def map[B](transformer: A => B): MyList[B] = {
+        new Cons[B](transformer(h), t.map(transformer))
+    }
+
+    def filter(predicate: A => Boolean): MyList[A] = {
+        if (predicate(h)) new Cons(h, t.filter(predicate))
+        else t.filter(predicate)
     }
 }
 
-object ListTest extends App {
-    val list = new Cons(1, Empty)
-    println(list.head)
-    println(list.add(48).head)
-    println(list.tail.isEmpty)
-    println(list.add(2).add(3))
+//trait MyPredicate[-T] { // T => Boolean
+//    def test(item: T): Boolean
+//}
+//
+//trait MyTransformer[-A, B] { // A => B
+//    def transform(item: A): B
+//}
+
+//class EvenPredicate extends MyPredicate[Int] {
+//    override def test(item: Int): Boolean = item % 2 == 0
+//}
+//
+//class StringToIntTransformer extends MyTransformer[String, Int] {
+//    override def transform(item: String): Int = item.toInt
+//}
+
+
+object ListTestGeneric extends App {
+
+    def evenPredicate : Int => Boolean = (v1: Int) => v1 % 2 == 0
+    def stringToIntTransformer : String => Int = (v1: String) => v1.toInt
+
+    val listOfInteger: MyList[Int] = new Cons(1, new Cons(2, new Cons(3, Empty)))
+    println(listOfInteger)
+
+    val listOfString: MyList[String] = new Cons("1", new Cons("2", Empty))
+    println(listOfString)
+
+    val evenList = listOfInteger.filter(evenPredicate)
+    println(evenList)
 }
